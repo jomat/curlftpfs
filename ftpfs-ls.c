@@ -14,6 +14,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <glib.h>
+#include <ctype.h>
+#include <strings.h>
 
 #include "ftpfs.h"
 #include "charset_utils.h"
@@ -187,6 +189,106 @@ static int parse_dir_netware(const char *line,
   return 0;
 }
 
+static int parse_dir_apache(const char *line,
+			    struct stat *sbuf,
+			    char *file,
+			    char *link) {
+  long nlink = 1;
+  long size;
+  int year = -1, month = -1, day = -1, hr = -1, min = -1;
+  char monthstr[10] = "", sizestr[100] = "";
+  int sizemultval, len;
+  struct tm tm;
+  time_t tt;
+  int res;
+  char monthabbrev[][4] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
+			   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+
+  char *p;
+  char linecopy[1024], file2[1024];
+  int quotemode = 0;
+  int sizeint = 0, sizetenth = 0;
+  char sizemultstr[10];
+
+  memset(linecopy, 0, sizeof(linecopy));
+  strcpy(linecopy, line);
+  memset(file,  0, sizeof(char)*1024);
+  memset(file2, 0, sizeof(file2));
+  *link = 0;
+
+  /* Convert markup to upper case */
+  for (p=linecopy; *p; p++) {
+    if (*p == '"' || *p == '\'') quotemode = 1-quotemode;
+    if (!quotemode) *p = toupper(*p);
+  }
+
+  /* Skip to <A HREF=" */
+  p = strstr(linecopy, "<A ");
+  if (p == 0) return 0;
+  res = sscanf(p, "<A%*[^H]HREF=\"%[^\"<>]%*[^>]>%[^<]</A> %2d-%[^-]-%4d %d:%d %s",
+	       file, file2, &day, monthstr, &year, &hr, &min, sizestr);
+  if (res < 8) return 0;
+  /* Check that the two file names are the same, at least the first
+     few characters.  This is just a heuristic to get rid of junk. */
+  if (strncasecmp(file, file2,10) != 0) return 0;
+
+  size = 0;
+  sizemultval = 1;
+  if (sscanf(sizestr, "%d.%d%[kKmMgG]", &sizeint, &sizetenth, sizemultstr) == 3) {
+    if (toupper(sizemultstr[0]) == 'K') sizemultval = 1024;
+    if (toupper(sizemultstr[0]) == 'M') sizemultval = 1024*1024;
+    if (toupper(sizemultstr[0]) == 'G') sizemultval = 1024*1024*1024;
+    if (sizeint > 0 || sizetenth > 0) {
+      size = sizeint*sizemultval + (sizetenth)*sizemultval/10;
+    }
+  } else if (sscanf(sizestr, "%d%[kKmMgG]", &sizeint, sizemultstr) == 2) {
+    if (toupper(sizemultstr[0]) == 'K') sizemultval = 1024;
+    if (toupper(sizemultstr[0]) == 'M') sizemultval = 1024*1024;
+    if (toupper(sizemultstr[0]) == 'G') sizemultval = 1024*1024*1024;
+    if (sizeint > 0) {
+      size = (sizeint)*sizemultval;
+    }
+  } else if (sscanf(sizestr, "%ld", &size) == 1) {
+    /* Dummy */
+  }
+
+  memset(&tm, 0, sizeof(tm));
+  memset(&tt, 0, sizeof(tt));
+
+  len = strlen(file);
+  if (file[len-1] == '/') {
+    sbuf->st_mode |= S_IFDIR;
+    sbuf->st_mode |= 0111;    /* --x--x--x */
+    file[len-1] = 0;
+  } else {
+    sbuf->st_mode |= S_IFREG;
+  }
+  sbuf->st_mode |= 0444;      /* r--r--r-- */
+
+  sbuf->st_nlink = nlink;
+  sbuf->st_size = size;
+
+  /* Find the correct month number.  Note that strptime is not
+     necessarily useful for locale-specific dates, since the server
+     and the client may be in different locales.  Assume that the
+     month is in English. */
+  for (month=0; month<12; month++) {
+    if (strcasecmp(monthstr, monthabbrev[month]) == 0) break;
+  }
+  if (month == 13) month = 0;
+
+  tm.tm_sec = 0;
+  tm.tm_min = min;
+  tm.tm_hour = hr;
+  tm.tm_mday = day;
+  tm.tm_mon = month;
+  tm.tm_year = year - 1900;
+
+  sbuf->st_atime = sbuf->st_ctime = sbuf->st_mtime = mktime(&tm);
+
+  return 1;
+
+}
 
 int parse_dir(const char* list, const char* dir,
               const char* name, struct stat* sbuf,
@@ -229,9 +331,14 @@ int parse_dir(const char* list, const char* dir,
     }
 
     file[0] = link[0] = '\0';
-    int res = parse_dir_unix(line, &stat_buf, file, link) ||
-              parse_dir_win(line, &stat_buf, file, link) ||
-              parse_dir_netware(line, &stat_buf, file, link);
+    int res;
+    if (!ftpfs.is_http) {
+      res = parse_dir_unix(line, &stat_buf, file, link) ||
+            parse_dir_win(line, &stat_buf, file, link) ||
+            parse_dir_netware(line, &stat_buf, file, link);
+    } else {
+      res = parse_dir_apache(line, &stat_buf, file, link);
+    }
 
     if (res) {
       char *full_path = g_strdup_printf("%s%s", dir, file);

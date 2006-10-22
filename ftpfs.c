@@ -1444,7 +1444,13 @@ static int ftpfs_opt_proc(void* data, const char* arg, int key,
     case FUSE_OPT_KEY_NONOPT:
       if (!ftpfs.host) {
         const char* prefix = "";
-        if (strncmp(arg, "ftp://", 6) && strncmp(arg, "ftps://", 7)) {
+        if (strncmp(arg, "http://", 7) && strncmp(arg, "https://", 8)) {
+          ftpfs.is_http = 1;
+          /* HTTP is always read-only */
+          fuse_opt_add_arg(outargs, "-o");
+          fuse_opt_add_arg(outargs, "ro");
+        }
+        if (strncmp(arg, "ftp://", 6) && strncmp(arg, "ftps://", 7) && !ftpfs.is_http) {
           prefix = "ftp://";
         }
         ftpfs.host = g_strdup_printf("%s%s%s", prefix, arg, 
@@ -1557,17 +1563,19 @@ static void set_common_curl_stuff(CURL* easy) {
   curl_easy_setopt_or_die(easy, CURLOPT_READFUNCTION, write_data);
   curl_easy_setopt_or_die(easy, CURLOPT_ERRORBUFFER, error_buf);
   curl_easy_setopt_or_die(easy, CURLOPT_URL, ftpfs.host);
-  curl_easy_setopt_or_die(easy, CURLOPT_NETRC, CURL_NETRC_OPTIONAL);
   curl_easy_setopt_or_die(easy, CURLOPT_NOSIGNAL, 1);
 
-  if (!ftpfs.deref_symlinks) {
-    curl_easy_setopt_or_die(easy, CURLOPT_CUSTOMREQUEST, "LIST -a");
-  } else {
-    curl_easy_setopt_or_die(easy, CURLOPT_CUSTOMREQUEST, "LIST -aL");
-  }
+  if (!ftpfs.is_http) {
+    curl_easy_setopt_or_die(easy, CURLOPT_NETRC, CURL_NETRC_OPTIONAL);
+    if (!ftpfs.deref_symlinks) {
+      curl_easy_setopt_or_die(easy, CURLOPT_CUSTOMREQUEST, "LIST -a");
+    } else {
+      curl_easy_setopt_or_die(easy, CURLOPT_CUSTOMREQUEST, "LIST -aL");
+    }
 
-  if (ftpfs.custom_list) {
-    curl_easy_setopt_or_die(easy, CURLOPT_CUSTOMREQUEST, ftpfs.custom_list);
+    if (ftpfs.custom_list) {
+      curl_easy_setopt_or_die(easy, CURLOPT_CUSTOMREQUEST, ftpfs.custom_list);
+    }
   }
 
   if (ftpfs.tryutf8) {
@@ -1832,7 +1840,9 @@ int main(int argc, char** argv) {
 
   set_common_curl_stuff(easy);
   curl_easy_setopt_or_die(easy, CURLOPT_WRITEDATA, NULL);
-  curl_easy_setopt_or_die(easy, CURLOPT_NOBODY, ftpfs.safe_nobody);
+  if (!ftpfs.is_http) {
+    curl_easy_setopt_or_die(easy, CURLOPT_NOBODY, ftpfs.safe_nobody);
+  }
   curl_res = curl_easy_perform(easy);
   if (curl_res != 0) {
     fprintf(stderr, "Error connecting to ftp: %s\n", error_buf);

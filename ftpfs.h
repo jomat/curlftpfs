@@ -65,6 +65,7 @@ struct ftpfs {
   curl_version_info_data* curl_version;
   int safe_nobody;
   int tryutf8;
+  int is_http;
   char *codepage;
   char *iocharset;
   int multiconn;
