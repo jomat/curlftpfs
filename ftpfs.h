@@ -26,6 +26,7 @@ struct ftpfs {
   int verbose;
   int debug;
   int transform_symlinks;
+  int deref_symlinks;
   int disable_epsv;
   int skip_pasv_ip;
   char* ftp_method;

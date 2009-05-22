@@ -132,6 +132,7 @@ enum {
 static struct fuse_opt ftpfs_opts[] = {
   FTPFS_OPT("ftpfs_debug=%u",     debug, 0),
   FTPFS_OPT("transform_symlinks", transform_symlinks, 1),
+  FTPFS_OPT("deref_symlinks",     deref_symlinks, 1),
   FTPFS_OPT("disable_epsv",       disable_epsv, 1),
   FTPFS_OPT("enable_epsv",        disable_epsv, 0),
   FTPFS_OPT("skip_pasv_ip",       skip_pasv_ip, 1),
@@ -1485,6 +1486,7 @@ static void usage(const char* progname) {
 "FTP options:\n"
 "    ftpfs_debug         print some debugging information\n"
 "    transform_symlinks  prepend mountpoint to absolute symlink targets\n"
+"    deref_symlinks      show reference file rather than the link itself\n"
 "    disable_epsv        use PASV, without trying EPSV first (default)\n"
 "    enable_epsv         try EPSV before reverting to PASV\n"
 "    skip_pasv_ip        skip the IP address for PASV\n"
@@ -1557,7 +1559,12 @@ static void set_common_curl_stuff(CURL* easy) {
   curl_easy_setopt_or_die(easy, CURLOPT_URL, ftpfs.host);
   curl_easy_setopt_or_die(easy, CURLOPT_NETRC, CURL_NETRC_OPTIONAL);
   curl_easy_setopt_or_die(easy, CURLOPT_NOSIGNAL, 1);
-  curl_easy_setopt_or_die(easy, CURLOPT_CUSTOMREQUEST, "LIST -a");
+
+  if (!ftpfs.deref_symlinks) {
+    curl_easy_setopt_or_die(easy, CURLOPT_CUSTOMREQUEST, "LIST -a");
+  } else {
+    curl_easy_setopt_or_die(easy, CURLOPT_CUSTOMREQUEST, "LIST -aL");
+  }
 
   if (ftpfs.custom_list) {
     curl_easy_setopt_or_die(easy, CURLOPT_CUSTOMREQUEST, ftpfs.custom_list);
