@@ -615,6 +615,8 @@ static void free_ftpfs_file(struct ftpfs_file *fh) {
   sem_destroy(&fh->data_need);
   sem_destroy(&fh->data_written);
   sem_destroy(&fh->ready);
+  if (fh->buf.size) { buf_free(&fh->buf); }
+  if (fh->stream_buf.size) { buf_free(&fh->stream_buf); }
   free(fh);
 }
 
