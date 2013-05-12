@@ -778,13 +778,13 @@ static int ftpfs_open_common(const char* path, mode_t mode,
 		err = -ENOTSUP;
 	  }
 	  
-	  if ((fi->flags & O_EXCL))
-	  {
-		DEBUG(1, "opening %s with O_EXCL - testing existence\n", path);
-		int exists_r = test_exists(path);
-		if (exists_r != -ENOENT)
-			err = -EACCES;
-	  }
+//	  if ((fi->flags & O_EXCL))
+//	  {
+//		DEBUG(1, "opening %s with O_EXCL - testing existence\n", path);
+//		int exists_r = test_exists(path);
+//		if (exists_r != -ENOENT)
+//			err = -EACCES;
+//	  }
 	  
 	  if (!err)
 	  {
@@ -835,6 +835,8 @@ static int ftpfs_open(const char* path, struct fuse_file_info* fi) {
 #if FUSE_VERSION >= 25
 static int ftpfs_create(const char* path, mode_t mode,
                         struct fuse_file_info* fi) {
+//	return ftpfs_open_common(path, mode, fi);
+	ftpfs_mknod(path, mode, NULL);
   return ftpfs_open_common(path, mode, fi);
 }
 #endif
