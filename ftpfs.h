@@ -34,6 +34,7 @@ struct ftpfs {
   int tcp_nodelay;
   char* ftp_port;
   int disable_eprt;
+  int timeout;
   int connect_timeout;
   int use_ssl;
   int no_verify_hostname;

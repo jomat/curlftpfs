@@ -141,6 +141,7 @@ static struct fuse_opt ftpfs_opts[] = {
   FTPFS_OPT("ftp_method=%s",      ftp_method, 0),
   FTPFS_OPT("custom_list=%s",     custom_list, 0),
   FTPFS_OPT("tcp_nodelay",        tcp_nodelay, 1),
+  FTPFS_OPT("timeout=%u",         timeout, 0),
   FTPFS_OPT("connect_timeout=%u", connect_timeout, 0),
   FTPFS_OPT("ssl",                use_ssl, CURLFTPSSL_ALL),
   FTPFS_OPT("ssl_control",        use_ssl, CURLFTPSSL_CONTROL),
@@ -1501,6 +1502,7 @@ static void usage(const char* progname) {
 "    ftp_method          [multicwd/singlecwd] Control CWD usage\n"
 "    custom_list=STR     Command used to list files. Defaults to \"LIST -a\"\n"
 "    tcp_nodelay         use the TCP_NODELAY option\n"
+"    timeout=N           maximum time the request is allowed to take in seconds\n"
 "    connect_timeout=N   maximum time allowed for connection in seconds\n"
 "    ssl                 enable SSL/TLS for both control and data connections\n"
 "    ssl_control         enable SSL/TLS only for control connection\n"
@@ -1621,6 +1623,7 @@ static void set_common_curl_stuff(CURL* easy) {
     curl_easy_setopt_or_die(easy, CURLOPT_TCP_NODELAY, 1);
   }
 
+  curl_easy_setopt_or_die(easy, CURLOPT_TIMEOUT, ftpfs.timeout);
   curl_easy_setopt_or_die(easy, CURLOPT_CONNECTTIMEOUT, ftpfs.connect_timeout);
 
   /* CURLFTPSSL_CONTROL and CURLFTPSSL_ALL should make the connection fail if
