@@ -22,6 +22,9 @@ case $host_os in
 	darwin*)
 	CFLAGS="$CFLAGS -D__off_t=off_t"
 	;;
+	*musl*)
+	CFLAGS="$CFLAGS -D__off_t=off_t"
+	;;
 esac
 CFLAGS="$CFLAGS -Wall -W -Wno-sign-compare -D_REENTRANT $GLIB_CFLAGS $FUSE_CFLAGS $LIBCURL_CPPFLAGS"
 LIBS="$GLIB_LIBS $FUSE_LIBS $LIBCURL"
