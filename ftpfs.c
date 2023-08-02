@@ -36,6 +36,8 @@
 
 #define MAX_BUFFER_LEN (300*1024)
 
+extern char *getpass(const char *prompt);
+
 struct ftpfs ftpfs;
 static char error_buf[CURL_ERROR_SIZE];
 
