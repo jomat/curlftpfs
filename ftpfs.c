@@ -1627,9 +1627,10 @@ static void set_common_curl_stuff(CURL* easy) {
   }
 
   if (ftpfs.no_verify_hostname) {
-    /* The default is 2 which verifies even the host string. This sets to 1
-     * which means verify the host but not the string. */
-    curl_easy_setopt_or_die(easy, CURLOPT_SSL_VERIFYHOST, 1);
+    /* The default is 2 which verifies even the host string. This sets
+     * to 0 which means the connection succeeds regardless of the names
+     * in the certificate. */
+    curl_easy_setopt_or_die(easy, CURLOPT_SSL_VERIFYHOST, 0);
   }
 
   curl_easy_setopt_or_die(easy, CURLOPT_INTERFACE, ftpfs.interface);
