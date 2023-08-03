@@ -23,6 +23,8 @@ libcurl >= 7.17.0
 Compilation and Installation
 ============================
 
+autoupdate
+autoreconf --install --force --verbose "."
 ./configure
 make
 make install
