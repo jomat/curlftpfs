@@ -112,7 +112,7 @@ char* get_dir_path(const char* path) {
                         ftpfs.host,
                         lastdir - path,
                         path,
-                        lastdir - path ? "/" : "");
+                        (lastdir - path) ? "/" : "");
 
   free(converted_path);
 

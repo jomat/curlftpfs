@@ -52,7 +52,7 @@ static void free_node(gpointer node_)
     g_free(node);
 }
 
-static int cache_clean_entry(void *key_, struct node *node, time_t *now)
+static int cache_clean_entry(void *key_, struct node *node, const time_t *now)
 {
     (void) key_;
     if (*now > node->valid)
@@ -136,11 +136,9 @@ static struct node *cache_get(const char *path)
 void cache_add_attr(const char *path, const struct stat *stbuf)
 {
     struct node *node;
-    time_t now;
 
     pthread_mutex_lock(&cache.lock);
     node = cache_get(path);
-    now = time(NULL);
     if (stbuf) {
       node->stat = *stbuf;
       node->not_found = 0;
@@ -157,11 +155,9 @@ void cache_add_attr(const char *path, const struct stat *stbuf)
 void cache_add_dir(const char *path, char **dir)
 {
     struct node *node;
-    time_t now;
 
     pthread_mutex_lock(&cache.lock);
     node = cache_get(path);
-    now = time(NULL);
     g_strfreev(node->dir);
     node->dir = dir;
     node->not_found = 0;
@@ -182,11 +178,9 @@ static size_t my_strnlen(const char *s, size_t maxsize)
 void cache_add_link(const char *path, const char *link, size_t size)
 {
     struct node *node;
-    time_t now;
 
     pthread_mutex_lock(&cache.lock);
     node = cache_get(path);
-    now = time(NULL);
     g_free(node->link);
     node->link = g_strndup(link, my_strnlen(link, size-1));
     node->not_found = 0;

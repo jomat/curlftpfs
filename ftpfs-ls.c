@@ -8,9 +8,7 @@
 
 #include <time.h>
 #include <string.h>
-#include <sys/types.h>
 #include <sys/stat.h>
-#include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <glib.h>
@@ -131,7 +129,7 @@ static int parse_dir_unix(const char *line,
 static int parse_dir_win(const char *line,
                          struct stat *sbuf,
                          char *file,
-                         char *link) {
+                         const char *link) {
   char date[9];
   char hour[8];
   char size[33];
@@ -180,8 +178,8 @@ static int parse_dir_win(const char *line,
 
 static int parse_dir_netware(const char *line,
                              struct stat *sbuf,
-                             char *file,
-                             char *link) {
+                             const char *file,
+                             const char *link) {
   (void) line;
   (void) sbuf;
   (void) file;

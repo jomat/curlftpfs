@@ -7,13 +7,11 @@
 */
 
 #include <time.h>                                                        
-#include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <assert.h>
 
-#include "ftpfs.h"
-#include "ftpfs-ls.h"
+#include "../ftpfs.h"
+#include "../ftpfs-ls.h"
 
 struct ftpfs ftpfs;
 
@@ -25,19 +23,19 @@ struct ftpfs ftpfs;
   memset(&tm, 0, sizeof(tm)); \
   strptime(date, "%H:%M:%S %d/%m/%Y", &tm); \
   tt = mktime(&tm); \
-  assert(sbuf.st_dev == (dev)); \
-  assert(sbuf.st_ino == (ino)); \
-  assert(sbuf.st_mode == (mode)); \
-  assert(sbuf.st_nlink == (nlink)); \
-  assert(sbuf.st_uid == (uid)); \
-  assert(sbuf.st_gid == (gid)); \
-  assert(sbuf.st_rdev == (rdev)); \
-  assert(sbuf.st_size == (size)); \
-  assert(sbuf.st_blksize == (blksize)); \
-  assert(sbuf.st_blocks == (blocks)); \
-  assert(sbuf.st_atime == tt); \
-  assert(sbuf.st_ctime == tt); \
-  assert(sbuf.st_mtime == tt); \
+  assert((sbuf).st_dev == (dev)); \
+  assert((sbuf).st_ino == (ino)); \
+  assert((sbuf).st_mode == (mode)); \
+  assert((sbuf).st_nlink == (nlink)); \
+  assert((sbuf).st_uid == (uid)); \
+  assert((sbuf).st_gid == (gid)); \
+  assert((sbuf).st_rdev == (rdev)); \
+  assert((sbuf).st_size == (size)); \
+  assert((sbuf).st_blksize == (blksize)); \
+  assert((sbuf).st_blocks == (blocks)); \
+  assert((sbuf).st_atime == tt); \
+  assert((sbuf).st_ctime == tt); \
+  assert((sbuf).st_mtime == tt); \
   } while (0);
 
 int main(int argc, char **argv) {
