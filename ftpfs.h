@@ -26,6 +26,7 @@ struct ftpfs {
   int verbose;
   int debug;
   int transform_symlinks;
+  int deref_symlinks;
   int disable_epsv;
   int skip_pasv_ip;
   char* ftp_method;
@@ -33,6 +34,7 @@ struct ftpfs {
   int tcp_nodelay;
   char* ftp_port;
   int disable_eprt;
+  int timeout;
   int connect_timeout;
   int use_ssl;
   int no_verify_hostname;
@@ -64,9 +66,11 @@ struct ftpfs {
   curl_version_info_data* curl_version;
   int safe_nobody;
   int tryutf8;
+  int is_http;
   char *codepage;
   char *iocharset;
   int multiconn;
+  char *netrc;
 };
 
 extern struct ftpfs ftpfs;

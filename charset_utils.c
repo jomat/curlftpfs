@@ -16,12 +16,12 @@
 
 #include "ftpfs.h"
 
-int convert_charsets(const char* from, const char* to, char** str) {
+void convert_charsets(const char* from, const char* to, char** str) {
   iconv_t cd;
   char* s = *str;
 
   if (!s || !*s)
-    return 0;
+    return;
 
   if (to && from && (cd = iconv_open(to, from)) != (iconv_t)-1) {
     ICONV_CONST char* ib;
@@ -53,6 +53,4 @@ int convert_charsets(const char* from, const char* to, char** str) {
   } else {
     DEBUG(2, "iconv_open return error %d\n", errno);
   }
-  
-  return 0;
 }
